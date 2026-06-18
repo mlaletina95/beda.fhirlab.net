@@ -22,7 +22,7 @@ import { formatHumanDateTime, formatPeriodDateTime } from '@beda.software/emr/ut
 import { prepareIPSBundle } from './utils';
 import { getOrganization, getPractitioner } from '../EncountersUberList';
 import { getPerformers } from '../ImmunizationsUberList ';
-import { getObservationCode, getObservationValue } from '../ObservationsUberList';
+import { getObservationCode, getObservationValue, getEffectiveDateTime } from '../ObservationsUberList';
 
 function prepareComposition(
     resources: Composition[],
@@ -75,7 +75,7 @@ function prepareComposition(
 function prepareEncounter(resources: Encounter[], bundle: Bundle<Encounter>): OverviewCard<Encounter> {
     return {
         title: 'Encounters',
-        key: 'ecnounter',
+        key: 'encounters',
         icon: <h2></h2>,
         data: resources,
         total: bundle.total ?? 0,
@@ -161,7 +161,7 @@ function prepareImmunization(resources: Immunization[], bundle: Bundle<Immunizat
 function prepareObservation(resources: Observation[], bundle: Bundle<Observation>): OverviewCard<Observation> {
     return {
         title: 'Observation',
-        key: 'observation',
+        key: 'observations',
         icon: <h2></h2>,
         data: resources,
         total: bundle.total ?? 0,
@@ -177,7 +177,7 @@ function prepareObservation(resources: Observation[], bundle: Bundle<Observation
             {
                 title: 'Date',
                 key: 'date',
-                render: (resource) => formatHumanDateTime(resource.effectiveDateTime),
+                render: (resource) => formatHumanDateTime(getEffectiveDateTime(resource)),
             },
             {
                 title: 'Code',
@@ -196,7 +196,7 @@ function prepareObservation(resources: Observation[], bundle: Bundle<Observation
 function prepareProcedure(resources: Procedure[], bundle: Bundle<Procedure>): OverviewCard<Procedure> {
     return {
         title: 'Procedure',
-        key: 'procedure',
+        key: 'procedures',
         icon: <h2></h2>,
         data: resources,
         total: bundle.total ?? 0,
