@@ -12,6 +12,7 @@ import { WithId, extractBundleResources } from '@beda.software/fhir-react';
 import { isFailure, isSuccess, mapSuccess } from '@beda.software/remote-data';
 
 import { dashboard } from './dashboard';
+import { connectathonDocumentLaunchContext } from './connectathonDocumentLaunchContext';
 import { getFHIRResources, service } from '@beda.software/emr/services';
 
 const getName = compileAsFirst<Patient, string>("Patient.name.given.first() + ' ' + Patient.name.family");
@@ -79,7 +80,7 @@ function Documents({ patient }: { patient: WithId<Patient> }) {
                             await sdcExtact(result.questionnaireResponse);
                             window.history.back();
                         }}
-                        launchContextParameters={[{'name': 'patient', resource: patient}]}
+                        launchContextParameters={connectathonDocumentLaunchContext(patient)}
                     />
                 }
             />
@@ -88,7 +89,7 @@ function Documents({ patient }: { patient: WithId<Patient> }) {
                 element={
                     <PatientDocumentDetails
                         patient={patient}
-                        launchContextParameters={[{ 'name': 'patient', resource: patient }]}/>
+                        launchContextParameters={connectathonDocumentLaunchContext(patient)}/>
                 }
             />
         </Routes>
