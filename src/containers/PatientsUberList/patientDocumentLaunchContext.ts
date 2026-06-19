@@ -2,7 +2,7 @@ import type { ParametersParameter, Patient } from 'fhir/r4b';
 
 import { getReference, WithId } from '@beda.software/fhir-react';
 
-export function connectathonDocumentLaunchContext(patient: WithId<Patient>): ParametersParameter[] {
+export function patientDocumentLaunchContext(patient: WithId<Patient>): ParametersParameter[] {
     const patientRef = getReference(patient);
 
     return [
