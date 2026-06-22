@@ -17,12 +17,22 @@ import {
 import type { Dashboard, DashboardInstance } from '@beda.software/emr/dist/components/Dashboard/types';
 import type { OverviewCard } from '@beda.software/emr/dist/containers/PatientDetails/PatientOverviewDynamic/components/StandardCard/types';
 import { StandardCardContainerFabric } from '@beda.software/emr/dist/containers/PatientDetails/PatientOverviewDynamic/containers/StandardCardContainerFabric/index';
-import { formatHumanDateTime, formatPeriodDateTime } from '@beda.software/emr/utils';
+import { formatHumanDateTime, formatPeriodDateTime, compileAsFirst } from '@beda.software/emr/utils';
 
 import { prepareIPSBundle } from './utils';
-import { getOrganization, getPractitioner } from '../EncountersUberList';
 import { getPerformers } from '../ImmunizationsUberList ';
 import { getObservationCode, getObservationValue, getEffectiveDateTime } from '../ObservationsUberList';
+import { getProcedureCode } from '../ProceduresUberList';
+
+const getVaccineCode = compileAsFirst<Immunization, string>(
+    'Immunization.vaccineCode.text | Immunization.vaccineCode.coding.first().display',
+);
+const getPractitionerLabel = compileAsFirst<Encounter, string>(
+    'Encounter.participant.individual.display | Encounter.participant.individual.reference',
+);
+const getOrganizationLabel = compileAsFirst<Encounter, string>(
+    'Encounter.serviceProvider.display | Encounter.serviceProvider.reference',
+);
 
 function prepareComposition(
     resources: Composition[],
@@ -97,22 +107,12 @@ function prepareEncounter(resources: Encounter[], bundle: Bundle<Encounter>): Ov
             {
                 title: 'Practitioner',
                 key: 'practitioner',
-                render: (resource) => {
-                    const reference = getPractitioner(resource);
-                    if (reference) {
-                        return reference.display ?? reference.reference;
-                    }
-                },
+                render: (resource) => getPractitionerLabel(resource),
             },
             {
                 title: 'Organization',
                 key: 'organization',
-                render: (resource) => {
-                    const reference = getOrganization(resource);
-                    if (reference) {
-                        return reference.display ?? reference.reference;
-                    }
-                },
+                render: (resource) => getOrganizationLabel(resource),
             },
         ],
     };
@@ -144,7 +144,7 @@ function prepareImmunization(resources: Immunization[], bundle: Bundle<Immunizat
                 title: 'Vaccine',
                 key: 'vaccine',
                 width: 250,
-                render: (resource) => resource.vaccineCode.text,
+                render: (resource) => getVaccineCode(resource),
             },
             {
                 title: 'Performer',
@@ -212,9 +212,7 @@ function prepareProcedure(resources: Procedure[], bundle: Bundle<Procedure>): Ov
             {
                 title: 'Code',
                 key: 'code',
-                render: (resource) => {
-                    return resource.code?.text ?? resource.code?.coding?.[0]?.display;
-                },
+                render: (resource) => getProcedureCode(resource),
             },
         ],
     };
