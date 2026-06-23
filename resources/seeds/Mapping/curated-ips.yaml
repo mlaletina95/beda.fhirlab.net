@@ -126,8 +126,9 @@ body:
           - title: Immunizations
             code:
               coding:
-                - code: 36419-9
+                - code: 11369-6
                   system: http://loinc.org
+                  display: History of Immunization
             text:
               status: generated
               "{% if %immunizationsSummary.exists() %}":
@@ -152,8 +153,9 @@ body:
           - title: Procedures
             code:
               coding:
-                - code: 30.1403-0
+                - code: 47519-4
                   system: http://loinc.org
+                  display: History of Procedures
             text:
               status: generated
               "{% if %proceduresSummary.exists() %}":
@@ -226,7 +228,8 @@ body:
           - allergyClinicalStatus: "{{ %allergyItem.item.where(linkId.startsWith('allergy-clinical-status')).answer.valueCoding }}"
           - allergyVerificationStatus: "{{ %allergyItem.item.where(linkId.startsWith('allergy-verification-status')).answer.valueCoding }}"
           - allergyCategory: "{[ %allergyItem.item.where(linkId.startsWith('allergy-category')).answer.valueCoding.code ]}"
-          - allergyReactionItems: "{[ %allergyItem.item.where(linkId.startsWith('allergy-reaction-group')) ]}"
+          - allergyManifestationAnswers: "{[ %allergyItem.item.where(linkId='allergy-manifestation').answer ]}"
+          - allergySeverity: "{{ %allergyItem.item.where(linkId='allergy-severity').answer.valueCoding.code }}"
         "{% if %allergyCode.exists() %}":
           fullUrl: "{{'urn:uuid:AllergyIntolerance-' + %index.toString()}}"
           request:
@@ -260,27 +263,27 @@ body:
               status: generated
               div: "<div xmlns='http://www.w3.org/1999/xhtml'><p><b>Generated Narrative</b></p><p><b>identifier</b>: id: urn:uuid:AllergyIntolerance-{{%index}}</p><p><b>clinicalStatus</b>: <span title='Codes: {http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical {{%allergyClinicalStatus.code}}}'>{{%allergyClinicalStatus.display}}</span></p><p><b>code</b>: <span title='Allergy or Intolerance}'>{{%allergyCode.display | %allergyCode}}</span></p><p><b>subject</b>: <a href='#Patient_{{%patientId}}'>See above (Patient/{{%patientId}})</a></p></div>"
             reaction:
-              - "{% for allergyReactionItem in %allergyReactionItems %}":
-                  "{% assign %}":
-                    - allergyReactionManifestationAnswer: "{{ %allergyReactionItem.item.where(linkId='allergy-manifestation').answer }}"
-                    - allergyReactionManifestation: "{{ %allergyReactionManifestationAnswer.valueCoding | %allergyReactionManifestationAnswer.valueString }}"
-                    - allergyReactionSeverity: "{{ %allergyReactionItem.item.where(linkId='allergy-severity').answer.valueCoding.code }}"
-                  manifestation:
-                    - "{% if %allergyReactionManifestation is String %}":
-                        text: "{{ %allergyReactionManifestation }}"
+              - manifestation:
+                  - "{% for allergyManifestationAnswer in %allergyManifestationAnswers %}":
+                      "{% assign %}":
+                        - allergyManifestation: "{{ %allergyManifestationAnswer.valueCoding | %allergyManifestationAnswer.valueString }}"
+                      "{% if %allergyManifestation is String %}":
+                        text: "{{ %allergyManifestation }}"
                       "{% else %}":
                         coding:
-                          - "{{ %allergyReactionManifestation }}"
-                  severity: "{{ %allergyReactionSeverity }}"
+                          - "{{ %allergyManifestation }}"
+                severity: "{{ %allergySeverity }}"
 
     - "{% for index, medicationItem in %medicationsItems %}":
         "{% assign %}":
           - medicationStatementId: "{{ %medicationItem.item.where(linkId='medication-statement-id').answer.valueString }}"
           - medicationReference: "{{ %medicationItem.item.where(linkId.startsWith('medication-medication')).answer.valueReference }}"
+          - medicationCodeableConceptAnswer: "{{ %medicationItem.item.where(linkId='medication-codeable-concept').answer }}"
+          - medicationCodeableConcept: "{{ %medicationCodeableConceptAnswer.valueCoding }}"
           - medicationStatus: "{{ %medicationItem.item.where(linkId.startsWith('medication-status')).answer.valueCoding.code }}"
-          - medicationStatusReason: "{[ %medicationItem.item.where(linkId.startsWith('medication-status-reason')).answer.valueCoding.code ]}"
+          - medicationStatusReasonCodings: "{[ %medicationItem.item.where(linkId.startsWith('medication-status-reason')).answer.valueCoding ]}"
           - medicationEffectiveDateTime: "{{ %medicationItem.item.where(linkId.startsWith('medication-effective-datetime')).answer.valueDateTime }}"
-        "{% if %medicationReference.exists() %}":
+        "{% if %medicationReference.exists() or %medicationCodeableConcept.exists() %}":
           fullUrl: "{{'urn:uuid:MedicationStatement-' + %index.toString()}}"
           request:
             "{% if %medicationStatementId.exists() %}":
@@ -295,13 +298,16 @@ body:
               profile:
                 - "http://hl7.org/fhir/uv/ips/StructureDefinition/MedicationStatement-uv-ips"
             status: "{{ %medicationStatus }}"
-            medicationReference: "{{ %medicationReference }}"
-            statusReason:
-              "{% for medicationStatusReasonItem in %medicationStatusReason %}":
+            "{% if %medicationReference.exists() %}":
+              medicationReference: "{{ %medicationReference }}"
+            "{% if %medicationCodeableConcept.exists() %}":
+              medicationCodeableConcept:
                 coding:
-                  - code: "{{ %medicationStatusReasonItem }}"
-                    system: http://terminology.hl7.org/CodeSystem/medication-statement-status-reason
-                    display: "{{ %medicationStatusReasonItem }}"
+                  - "{{ %medicationCodeableConcept }}"
+            statusReason:
+              coding:
+                - "{% for medicationStatusReasonCoding in %medicationStatusReasonCodings %}":
+                    "{{ %medicationStatusReasonCoding }}"
             effectiveDateTime: "{{ %medicationEffectiveDateTime }}"
             subject:
               reference: "Patient/{{ %patientId }}"
