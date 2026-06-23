@@ -85,7 +85,7 @@ item:
     text: Sections
     itemControl:
       coding:
-        - code: wizard
+        - code: group-tabs
     item:
       - linkId: problems-section
         text: Problems
