@@ -1,0 +1,26 @@
+resourceType: Questionnaire
+id: group-table-bug-repro
+url: group-table-bug-repro
+name: group-table-bug-repro
+title: "Repro: group-table cancel loses rows"
+status: active
+description: >-
+  Minimal questionnaire to reproduce a data-loss bug in the group-table itemControl
+  when adding a second repeating row and closing the modal with Cancel or OK.
+  See group-table-bug-repro.md for steps and proposed fix.
+meta:
+  profile:
+    - https://emr-core.beda.software/StructureDefinition/fhir-emr-questionnaire
+item:
+  - linkId: entries
+    text: Entry
+    type: group
+    repeats: true
+    itemControl:
+      coding:
+        - code: group-table
+    item:
+      - linkId: entry-name
+        text: Name
+        type: string
+        required: true

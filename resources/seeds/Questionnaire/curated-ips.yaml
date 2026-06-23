@@ -209,6 +209,9 @@ item:
             text: Allergy/Intolerance
             type: group
             repeats: true
+            itemControl:
+              coding:
+                - code: group-table
             itemPopulationContext:
               language: text/fhirpath
               expression: "%PatientAllergiesBundle.entry[0].resource.entry.resource"
@@ -257,45 +260,38 @@ item:
                   language: text/fhirpath
                   expression: "%context.category.coding"
 
-              - linkId: allergy-reaction-group
-                text: Reaction
-                type: group
+              - linkId: allergy-manifestation
+                text: Manifestation
+                type: choice
                 repeats: true
-                itemPopulationContext:
+                required: true
+                initialExpression:
                   language: text/fhirpath
-                  expression: "%context.reaction"
-                item:
-                  - linkId: allergy-manifestation
-                    text: Manifestation
-                    type: choice
-                    required: true
-                    initialExpression:
-                      language: text/fhirpath
-                      expression: "%context.manifestation.first().coding.first()"
-                    answerValueSet: https://tx.fhirlab.net/ValueSet/reaction
+                  expression: "%context.reaction.first().manifestation.coding"
+                answerValueSet: https://tx.fhirlab.net/ValueSet/reaction
 
-                  - linkId: allergy-severity
-                    text: Severity
-                    type: choice
-                    initialExpression:
-                      language: text/fhirpath
-                      expression: >-
-                        iif(%context.severity.exists(),
-                        %Questionnaire.repeat(item).where(linkId='allergy-severity').answerOption.valueCoding.where(code=%context.severity).first(),
-                        {})
-                    answerOption:
-                      - valueCoding:
-                          system: http://hl7.org/fhir/reaction-event-severity
-                          code: mild
-                          display: Mild
-                      - valueCoding:
-                          system: http://hl7.org/fhir/reaction-event-severity
-                          code: moderate
-                          display: Moderate
-                      - valueCoding:
-                          system: http://hl7.org/fhir/reaction-event-severity
-                          code: severe
-                          display: Severe
+              - linkId: allergy-severity
+                text: Severity
+                type: choice
+                initialExpression:
+                  language: text/fhirpath
+                  expression: >-
+                    iif(%context.reaction.first().severity.exists(),
+                    %Questionnaire.repeat(item).where(linkId='allergy-severity').answerOption.valueCoding.where(code=%context.reaction.first().severity).first(),
+                    {})
+                answerOption:
+                  - valueCoding:
+                      system: http://hl7.org/fhir/reaction-event-severity
+                      code: mild
+                      display: Mild
+                  - valueCoding:
+                      system: http://hl7.org/fhir/reaction-event-severity
+                      code: moderate
+                      display: Moderate
+                  - valueCoding:
+                      system: http://hl7.org/fhir/reaction-event-severity
+                      code: severe
+                      display: Severe
 
           - linkId: allergies-summary
             text: Summary
@@ -347,29 +343,23 @@ item:
                       )
                       & iif(
                         repeat(item)
-                          .where(linkId='allergy-reaction-group')
-                          .answer.exists(),
-                        '  \nReactions: '
+                          .where(linkId='allergy-manifestation')
+                          .answer.valueCoding.exists(),
+                        '  \nManifestation: '
                           & repeat(item)
-                            .where(linkId='allergy-reaction-group')
-                            .select(
-                              repeat(item)
-                                .where(linkId='allergy-manifestation')
-                                .answer.valueCoding.display.first()
-                              & iif(
-                                repeat(item)
-                                  .where(linkId='allergy-severity')
-                                  .answer.valueCoding.exists(),
-                                ' ('
-                                  & repeat(item)
-                                    .where(linkId='allergy-severity')
-                                    .answer.valueCoding.display.first()
-                                  & ')',
-                                ''
-                              )
-                            )
-                            .where($this.exists())
-                            .join(', '),
+                            .where(linkId='allergy-manifestation')
+                            .answer.valueCoding.display.join(', ')
+                        & iif(
+                          repeat(item)
+                            .where(linkId='allergy-severity')
+                            .answer.valueCoding.exists(),
+                          ' ('
+                            & repeat(item)
+                              .where(linkId='allergy-severity')
+                              .answer.valueCoding.display.first()
+                            & ')',
+                          ''
+                        ),
                         ''
                       ),
                       ''
